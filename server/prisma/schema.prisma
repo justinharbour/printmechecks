@@ -1,0 +1,60 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id          String   @id @default(cuid())
+  azureAdSub  String   @unique
+  email       String   @unique
+  name        String?
+  role        String   @default("USER")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Document {
+  id          String   @id @default(cuid())
+  filename    String
+  mimeType    String
+  sizeBytes   Int
+  storageUrl  String
+  blobName    String
+  isCheck     Boolean  @default(false)
+  uploadedBy  String?  // User.sub (optional until auth fully enforced)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  checkJobs   SendJob[] @relation("CheckDocRelation")
+  attachments SendJobAttachment[]
+}
+
+model SendJob {
+  id                   String              @id @default(cuid())
+  method               String
+  checkDocumentId      String?             // references Document if pdf mode
+  checkDocument        Document?           @relation("CheckDocRelation", fields: [checkDocumentId], references: [id])
+  status               String
+  recipientJson        String?
+  providerId           String?
+  providerResponseJson String?
+  createdAt            DateTime            @default(now())
+  updatedAt            DateTime            @updatedAt
+  attachments          SendJobAttachment[]
+}
+
+model SendJobAttachment {
+  id          String   @id @default(cuid())
+  sendJobId   String
+  documentId  String
+  createdAt   DateTime @default(now())
+
+  sendJob     SendJob  @relation(fields: [sendJobId], references: [id])
+  document    Document @relation(fields: [documentId], references: [id])
+
+  @@index([sendJobId])
+  @@index([documentId])
+}

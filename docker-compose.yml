@@ -1,0 +1,46 @@
+version: '3.8'
+services:
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: printmechecks
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    environment:
+      - PORT=3000
+      - POSTGRID_API_KEY=${POSTGRID_API_KEY}
+      - POSTGRID_API_URL=${POSTGRID_API_URL}
+      - POSTGRID_SEND_MODE=${POSTGRID_SEND_MODE:-pdf}
+      - POSTGRID_API_SUPPORTS_RAW=${POSTGRID_API_SUPPORTS_RAW:-false}
+      - POSTGRID_WEBHOOK_SECRET=${POSTGRID_WEBHOOK_SECRET}
+      - DATABASE_URL=${DATABASE_URL}
+      - AZURE_TENANT_ID=${AZURE_TENANT_ID}
+      - AZURE_CLIENT_ID=${AZURE_CLIENT_ID}
+      - AZURE_CLIENT_SECRET=${AZURE_CLIENT_SECRET}
+      - AZURE_STORAGE_ACCOUNT_NAME=${AZURE_STORAGE_ACCOUNT_NAME}
+      - AZURE_BLOB_CONTAINER=${AZURE_BLOB_CONTAINER:-printmechecks}
+      - AZURE_STORAGE_CONNECTION_STRING=${AZURE_STORAGE_CONNECTION_STRING}
+      - ACS_ENDPOINT=${ACS_ENDPOINT}
+      - ACS_CONNECTION_STRING=${ACS_CONNECTION_STRING}
+      - ACS_SENDER_ADDRESS=${ACS_SENDER_ADDRESS}
+      - AZURE_AD_ISSUER=${AZURE_AD_ISSUER}
+      - AZURE_AD_AUDIENCE=${AZURE_AD_AUDIENCE}
+      - FILE_MAX_SIZE_BYTES=${FILE_MAX_SIZE_BYTES:-10485760}
+    ports:
+      - "3000:3000"
+    depends_on:
+      - postgres
+    volumes:
+      - ./server/data:/usr/src/app/data
+
+volumes:
+  pgdata:
